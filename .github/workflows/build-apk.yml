@@ -8,7 +8,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 45
     
     steps:
       - name: Checkout code
@@ -18,6 +18,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm'
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -31,24 +32,17 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Install React Native CLI
-        run: npm install -g @react-native-community/cli
+      - name: Install Expo CLI
+        run: npm install -g expo-cli
 
-      - name: Create local.properties
-        run: echo "sdk.dir=$ANDROID_HOME" > android/local.properties
-
-      - name: Generate debug keystore
-        run: |
-          cd android/app
-          keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
-
-      - name: Make gradlew executable
-        run: chmod +x android/gradlew
+      - name: Generate Android project
+        run: npx expo prebuild --platform android
 
       - name: Build APK
         run: |
           cd android
-          ./gradlew assembleDebug --no-daemon --stacktrace
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
 
       - name: Rename APK
         run: |
@@ -64,17 +58,8 @@ jobs:
             
             基于 React Native WebView 的 Android 阅读器 APP。
             
-            ### 功能
-            - 📱 WebView 封装小书屋网站
-            - 🌙 优化阅读体验
-            - 📖 内置书源配置
-            
             ### 下载
-            - `xiaoswz-reader.apk` - 安装包
-            
-            ### 使用
-            1. 下载 APK 安装
-            2. 打开 APP 即可阅读
+            下载 `xiaoswz-reader.apk` 安装即可使用
           files: xiaoswz-reader.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
