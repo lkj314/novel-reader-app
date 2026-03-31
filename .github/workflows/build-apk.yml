@@ -1,0 +1,77 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Create local.properties
+        run: echo "sdk.dir=$ANDROID_HOME" > android/local.properties
+
+      - name: Generate debug keystore
+        run: |
+          cd android/app
+          keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+
+      - name: Make gradlew executable
+        run: chmod +x android/gradlew
+
+      - name: Build APK (Debug)
+        run: |
+          cd android
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Rename APK
+        run: |
+          mv android/app/build/outputs/apk/debug/app-debug.apk xiaoswz-reader.apk
+
+      - name: Upload APK to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.0
+          name: 小书屋阅读器 v1.0.0
+          body: |
+            ## 小书屋阅读器
+            
+            基于 React Native WebView 的 Android 阅读器 APP。
+            
+            ### 功能
+            - 📱 WebView 封装小书屋网站
+            - 🌙 优化阅读体验
+            - 📖 内置书源配置
+            
+            ### 下载
+            - `xiaoswz-reader.apk` - 安装包
+            
+            ### 使用
+            1. 下载 APK 安装
+            2. 打开 APP 即可阅读
+          files: xiaoswz-reader.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
