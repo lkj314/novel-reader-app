@@ -13,13 +13,15 @@ buildscript {
     dependencies {
         classpath("com.android.tools.build:gradle:8.2.0")
         classpath("com.facebook.react:react-native-gradle-plugin")
+        classpath("de.undercouch:gradle-download-task:5.5.0")
     }
 }
 
-apply plugin: "com.facebook.react.rootProject"
+apply plugin: "com.facebook.react.root-project"
 
 allprojects {
     repositories {
+        mavenLocal()
         maven {
             url("$rootDir/../node_modules/react-native/android")
         }
