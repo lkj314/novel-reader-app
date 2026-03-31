@@ -9,7 +9,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 45
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -32,21 +32,26 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Install Expo CLI
-        run: npm install -g expo-cli
+      - name: Bundle JavaScript
+        run: |
+          mkdir -p android/app/src/main/assets
+          npx react-native bundle \
+            --platform android \
+            --dev false \
+            --entry-file index.js \
+            --bundle-output android/app/src/main/assets/index.android.bundle \
+            --assets-dest android/app/src/main/res
 
-      - name: Generate Android project
-        run: npx expo prebuild --platform android
-
-      - name: Build APK
+      - name: Build Release APK
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon
+          ./gradlew assembleRelease --no-daemon
 
       - name: Rename APK
         run: |
-          mv android/app/build/outputs/apk/debug/app-debug.apk xiaoswz-reader.apk
+          mv android/app/build/outputs/apk/release/app-release.apk xiaoswz-reader.apk
+          ls -lh xiaoswz-reader.apk
 
       - name: Upload APK to Release
         uses: softprops/action-gh-release@v2
@@ -55,11 +60,16 @@ jobs:
           name: 小书屋阅读器 v1.0.0
           body: |
             ## 小书屋阅读器
-            
+
             基于 React Native WebView 的 Android 阅读器 APP。
-            
+
+            ### 功能
+            - 📱 WebView 封装小书屋网站
+            - 🌙 沉浸式阅读体验
+            - 📖 内置书源配置
+
             ### 下载
-            下载 `xiaoswz-reader.apk` 安装即可使用
+            下载 `xiaoswz-reader.apk` 安装即可使用（Release 版本，独立运行）
           files: xiaoswz-reader.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
